@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D First Person Scorched Earth</title>
+    
+    <!-- Import map to resolve Three.js modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+            }
+        }
+    </script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore.js";
+        
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyCUtz9EKzsZGw4B_UB6JTfax9TIueQi0NM",
+          authDomain: "tdscorchedearth.firebaseapp.com",
+          projectId: "tdscorchedearth",
+          storageBucket: "tdscorchedearth.firebasestorage.app",
+          messagingSenderId: "138662468509",
+          appId: "1:138662468509:web:78ab5f55c8c250205b6d74"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        
+        // Make services available globally
+        window.firebaseApp = app;
+        window.firebaseAuth = getAuth(app);
+        window.firebaseDb = getFirestore(app);
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+        }
+        
+        #renderDiv {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+        
+        #loadingBar {
+            width: 80%;
+            max-width: 400px;
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        #loadingProgress {
+            width: 0%;
+            height: 100%;
+            background-color: #22aa22;
+            transition: width 0.3s ease;
+        }
+        
+        #gameTitle {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        #gameInfo {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #aaa;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        /* Resource display */
+        #resourceDisplay {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 5px;
+            padding: 10px;
+            color: white;
+            font-size: 14px;
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .resource-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .resource-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .resource-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        
+        /* Reward popup */
+        #rewardPopup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            background-color: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            z-index: 200;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            width: 80%;
+            max-width: 350px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        #rewardPopup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+            pointer-events: auto;
+        }
+        
+        .reward-title {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #ffcc00;
+        }
+        
+        .reward-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .reward-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 5px;
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .reward-icon {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
+        
+        .reward-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        .reward-continue {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+        
+        .reward-continue:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        
+        @media (max-width: 768px) {
+            #gameTitle {
+                font-size: 20px;
+            }
+            
+            #loadingBar {
+                height: 16px;
+            }
+            
+            .reward-title {
+                font-size: 18px;
+            }
+        }
+        
+        /* Touch control overlay styles */
+        .touch-control {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            pointer-events: auto;
+            touch-action: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+        
+        .touch-control:active {
+            transform: scale(0.95);
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Orientation change message */
+        #orientationMessage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        #orientationMessage img {
+            width: 120px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="renderDiv"></div>
+    
+    <div id="loadingScreen">
+        <h1 id="gameTitle">3D SCORCHED EARTH</h1>
+        <div id="loadingBar">
+            <div id="loadingProgress"></div>
+        </div>
+        <p id="gameInfo">A 3D tank artillery game</p>
+    </div>
+    
+    <div id="orientationMessage">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjQiIHk9IjIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIyMCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PHBhdGggZD0iTTEyIDE4aC4wMSI+PC9wYXRoPjwvc3ZnPg==" alt="Rotate Device">
+        <h2>Please rotate your device</h2>
+        <p>Landscape mode provides the best gaming experience</p>
+    </div>
+    
+    <!-- Resources display UI -->
+    <div id="resourceDisplay">
+        <div class="resource-item">
+            <div class="resource-icon">💰</div>
+            <span id="creditsDisplay">1000 Credits</span>
+        </div>
+        <div class="resource-item">
+            <div class="resource-icon">⭐</div>
+            <span id="experienceDisplay">0 XP</span>
+        </div>
+        <div class="resource-item">
+            <div class="resource-icon">📊</div>
+            <span id="levelDisplay">Level 1</span>
+        </div>
+    </div>
+    
+    <!-- Reward popup -->
+    <div id="rewardPopup">
+        <h2 class="reward-title">Victory Rewards!</h2>
+        <div class="reward-content">
+            <div class="reward-item">
+                <span>Credits</span>
+                <div class="reward-icon">💰</div>
+                <span class="reward-value">+<span id="creditReward">100</span></span>
+            </div>
+            <div class="reward-item">
+                <span>Experience</span>
+                <div class="reward-icon">⭐</div>
+                <span class="reward-value">+<span id="xpReward">50</span></span>
+            </div>
+        </div>
+        <button class="reward-continue" id="rewardContinue">Continue</button>
+    </div>
+    
+    <script type="module">
+        import { Game } from './game.js';
+        import { AuthManager } from './auth.js';
+        
+        // Loading screen management
+        const loadingScreen = document.getElementById('loadingScreen');
+        const loadingProgress = document.getElementById('loadingProgress');
+        const orientationMessage = document.getElementById('orientationMessage');
+        const resourceDisplay = document.getElementById('resourceDisplay');
+        const rewardPopup = document.getElementById('rewardPopup');
+        const rewardContinue = document.getElementById('rewardContinue');
+        
+        // Resource display elements
+        const creditsDisplay = document.getElementById('creditsDisplay');
+        const experienceDisplay = document.getElementById('experienceDisplay');
+        const levelDisplay = document.getElementById('levelDisplay');
+        
+        // Reward display elements
+        const creditReward = document.getElementById('creditReward');
+        const xpReward = document.getElementById('xpReward');
+        
+        // Game instance
+        let game = null;
+        
+        // Setup reward continue button
+        rewardContinue.addEventListener('click', () => {
+            rewardPopup.classList.remove('show');
+        });
+        
+        // Check if device is mobile
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Check orientation if mobile
+        if (isMobile) {
+            checkOrientation();
+            window.addEventListener('orientationchange', () => {
+                setTimeout(checkOrientation, 200);
+            });
+            window.addEventListener('resize', checkOrientation);
+        }
+        
+        function checkOrientation() {
+            if (window.innerHeight > window.innerWidth) {
+                orientationMessage.style.display = 'flex';
+            } else {
+                orientationMessage.style.display = 'none';
+            }
+        }
+        
+        // Initialize the authentication manager
+        const authManager = new AuthManager((user) => {
+            // User authentication state changed
+            if (user) {
+                // User signed in
+                console.log('User signed in:', user);
+                
+                // Show resource display
+                updateResourceDisplay(user);
+                
+                // Start game if not already started
+                if (!game) {
+                    startGameWithUser(user);
+                } else {
+                    // Update existing game with user
+                    game.updatePlayerProfile(user);
+                }
+            } else {
+                // User signed out, show auth screen
+                authManager.showAuthScreen();
+                
+                // Hide resource display
+                resourceDisplay.style.opacity = '0';
+                resourceDisplay.style.transform = 'translateY(-20px)';
+            }
+        });
+        
+        // Show auth screen after loading animation
+        function showAuthAfterLoading() {
+            // Simulate loading progress
+            let progress = 0;
+            const loadingInterval = setInterval(() => {
+                progress += 5;
+                loadingProgress.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(loadingInterval);
+                    setTimeout(() => {
+                        loadingScreen.style.opacity = '0';
+                        setTimeout(() => {
+                            loadingScreen.style.display = 'none';
+                            
+                            // If user is already logged in, start the game
+                            const currentUser = authManager.getCurrentUser();
+                            if (currentUser) {
+                                startGameWithUser(currentUser);
+                                updateResourceDisplay(currentUser);
+                            } else {
+                                // Otherwise show the auth screen
+                                authManager.showAuthScreen();
+                            }
+                        }, 500);
+                    }, 500);
+                }
+            }, 100);
+        }
+        
+        function updateResourceDisplay(user) {
+            if (!user) return;
+            
+            // Get player data if available
+            const playerData = localStorage.getItem(`tankGame_player_${user.uid}`);
+            let resources = {
+                credits: 1000,
+                experience: 0,
+                level: 1
+            };
+            
+            if (playerData) {
+                try {
+                    const parsedData = JSON.parse(playerData);
+                    resources = parsedData.resources || resources;
+                } catch (e) {
+                    console.error('Error parsing player data', e);
+                }
+            }
+            
+            // Update UI
+            creditsDisplay.textContent = `${resources.credits} Credits`;
+            experienceDisplay.textContent = `${resources.experience} XP`;
+            levelDisplay.textContent = `Level ${resources.level}`;
+            
+            // Show resource display
+            resourceDisplay.style.opacity = '1';
+            resourceDisplay.style.transform = 'translateY(0)';
+        }
+        
+        function showRewardPopup(rewards) {
+            // Update reward values
+            creditReward.textContent = rewards.credits;
+            xpReward.textContent = rewards.experience;
+            
+            // Show popup
+            rewardPopup.classList.add('show');
+            
+            // Update resource display
+            updateResourceDisplay(authManager.getCurrentUser());
+        }
+        
+        function startGameWithUser(user) {
+            // Get the render target
+            const renderDiv = document.getElementById('renderDiv');
+            
+            // Initialize the game with the render target, device info, and user
+            game = new Game(renderDiv, isMobile, user);
+            
+            // Set callback for resource updates
+            game.onResourceUpdate = (resources) => {
+                updateResourceDisplay(authManager.getCurrentUser());
+            };
+            
+            // Set callback for rewards
+            game.onReward = (rewards) => {
+                showRewardPopup(rewards);
+            };
+            
+            // Start the game loop
+            game.start();
+        }
+        
+        // Start loading sequence
+        showAuthAfterLoading();
+    </script>
+</body>
+</html>
