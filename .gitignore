@@ -1,3 +1,5 @@
+public/
+
 # Logs
 logs
 *.log
@@ -9,9 +11,14 @@ firebase-debug.*.log*
 
 # Firebase cache
 .firebase/
+firebase.json
+
 
 # Firebase config
+.firebaserc
 
+# Gitignore
+.gitignore
 # Uncomment this if you'd like others to create their own Firebase project.
 # For a team working on the same Firebase project(s), it is recommended to leave
 # it commented so all members can deploy to the same project(s) in .firebaserc.
