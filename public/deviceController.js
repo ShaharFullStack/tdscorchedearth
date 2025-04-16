@@ -141,7 +141,7 @@ export class DeviceController {
     
     // Horizontal movement controls rotation (yaw)
     if (this.onAction) {
-      this.onAction('rotate', { amount: movementX * this.sensitivity });
+      this.onAction('rotate', { amount: -movementX * this.sensitivity });
     }
     
     // Vertical movement controls elevation (pitch)
@@ -547,72 +547,7 @@ export class DeviceController {
       this.touchActive = true;
     }
   }
-  // Update these methods in deviceController.js
-
-handleMoveTouchMove(e) {
-  e.preventDefault();
   
-  if (this.moveTouchActive && e.touches.length > 0) {
-    const touch = e.touches[0];
-    this.lastMoveTouchX = touch.clientX;
-    this.lastMoveTouchY = touch.clientY;
-    
-    // Calculate movement delta from center of joystick
-    let deltaX = this.lastMoveTouchX - this.moveTouchStartX;
-    let deltaY = this.lastMoveTouchY - this.moveTouchStartY;
-    
-    // Limit joystick movement radius
-    const radius = 40;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    
-    if (distance > radius) {
-      deltaX = (deltaX / distance) * radius;
-      deltaY = (deltaY / distance) * radius;
-    }
-    
-    // Update joystick position
-    this.moveStick.style.left = `${this.moveTouchStartX + deltaX}px`;
-    this.moveStick.style.top = `${this.moveTouchStartY + deltaY}px`;
-    
-    // Normalize for movement (values between -1 and 1)
-    const normalizedX = deltaX / radius;
-    const normalizedY = deltaY / radius;
-    
-    // Send movement action
-    if (this.onAction) {
-      this.onAction('move', {
-        x: normalizedX,
-        y: -normalizedY // Invert Y for forward/backward
-      });
-    }
-  }
-}
-
-handleTouchMove(e) {
-  e.preventDefault();
-  
-  if (this.touchActive && e.touches.length > 0) {
-    const touch = e.touches[0];
-    const deltaX = touch.clientX - this.lastTouchX;
-    const deltaY = this.lastTouchY - touch.clientY; // Inverted Y for intuitive control
-    
-    // Increase sensitivity for mobile look
-    const sensitivityX = 0.01;
-    const sensitivityY = 0.01;
-    
-    // Always treat as look controls in first-person mode
-    if (this.onAction) {
-      this.onAction('look', { 
-        x: deltaX * sensitivityX,
-        y: deltaY * sensitivityY
-      });
-    }
-    
-    this.lastTouchX = touch.clientX;
-    this.lastTouchY = touch.clientY;
-  }
-}
-
   handleTouchMove(e) {
     e.preventDefault();
     

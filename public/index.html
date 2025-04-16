@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D First Person Scorched Earth</title>
+    <title>3D Tank Artillery Combat</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="styles.css">
     
     <!-- Import map to resolve Three.js modules -->
     <script type="importmap">
@@ -40,274 +48,70 @@
         window.firebaseAuth = getAuth(app);
         window.firebaseDb = getFirestore(app);
     </script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            touch-action: none;
-            background-color: #000;
-            font-family: Arial, sans-serif;
-        }
-        
-        #renderDiv {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
-        
-        #loadingScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            z-index: 100;
-            transition: opacity 0.5s ease;
-        }
-        
-        #loadingBar {
-            width: 80%;
-            max-width: 400px;
-            height: 20px;
-            background-color: #333;
-            border-radius: 10px;
-            margin-top: 20px;
-            overflow: hidden;
-        }
-        
-        #loadingProgress {
-            width: 0%;
-            height: 100%;
-            background-color: #22aa22;
-            transition: width 0.3s ease;
-        }
-        
-        #gameTitle {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-align: center;
-            padding: 0 20px;
-        }
-        
-        #gameInfo {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #aaa;
-            text-align: center;
-            padding: 0 20px;
-        }
-        
-        /* Resource display */
-        #resourceDisplay {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 5px;
-            padding: 10px;
-            color: white;
-            font-size: 14px;
-            z-index: 50;
-            opacity: 0;
-            transform: translateY(-20px);
-            transition: all 0.3s ease;
-            pointer-events: none;
-        }
-        
-        .resource-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        
-        .resource-item:last-child {
-            margin-bottom: 0;
-        }
-        
-        .resource-icon {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        
-        /* Reward popup */
-        #rewardPopup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.8);
-            background-color: rgba(0, 0, 0, 0.9);
-            border-radius: 10px;
-            padding: 20px;
-            color: white;
-            text-align: center;
-            z-index: 200;
-            opacity: 0;
-            transition: all 0.3s ease;
-            pointer-events: none;
-            width: 80%;
-            max-width: 350px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
-        }
-        
-        #rewardPopup.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
-            pointer-events: auto;
-        }
-        
-        .reward-title {
-            font-size: 20px;
-            margin-bottom: 15px;
-            color: #ffcc00;
-        }
-        
-        .reward-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .reward-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background-color: rgba(255, 255, 255, 0.1);
-            padding: 10px 15px;
-            border-radius: 5px;
-            width: 100%;
-            justify-content: space-between;
-        }
-        
-        .reward-icon {
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-        }
-        
-        .reward-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #4CAF50;
-        }
-        
-        .reward-continue {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: all 0.2s ease;
-        }
-        
-        .reward-continue:hover {
-            background-color: #45a049;
-            transform: scale(1.05);
-        }
-        
-        @media (max-width: 768px) {
-            #gameTitle {
-                font-size: 20px;
-            }
-            
-            #loadingBar {
-                height: 16px;
-            }
-            
-            .reward-title {
-                font-size: 18px;
-            }
-        }
-        
-        /* Touch control overlay styles */
-        .touch-control {
-            position: absolute;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            pointer-events: auto;
-            touch-action: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: rgba(255, 255, 255, 0.7);
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-            transition: transform 0.1s ease, background-color 0.1s ease;
-        }
-        
-        .touch-control:active {
-            transform: scale(0.95);
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-        
-        /* Orientation change message */
-        #orientationMessage {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9);
-            color: white;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            flex-direction: column;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        #orientationMessage img {
-            width: 120px;
-            height: auto;
-            margin-bottom: 20px;
-        }
-    </style>
 </head>
 <body>
     <div id="renderDiv"></div>
     
+    <!-- HUD Elements -->
+    <div id="messageDisplay" class="hud-element">Click to enable mouse aiming, use WASD to move</div>
+    <div id="gameInfoContainer">
+        <div class="info-panel">
+            <div class="info-panel-title">Wind</div>
+            <div class="info-panel-value" id="windValue">0.0</div>
+            <div id="windIndicator"></div>
+        </div>
+        <div class="info-panel">
+            <div class="info-panel-title">Power</div>
+            <div class="info-panel-value" id="powerValue">40</div>
+            <div class="power-meter">
+                <div class="power-fill" id="powerFill" style="width: 60%;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Health Container -->
+    <div id="healthContainer">
+        <div class="health-bar-container">
+            <div class="health-bar-label">
+                <span>Player</span>
+                <span id="playerHealthText">100%</span>
+            </div>
+            <div class="health-bar">
+                <div class="health-fill player-health-fill" id="playerHealthFill" style="width: 100%"></div>
+            </div>
+        </div>
+        <!-- Enemy health bars will be added dynamically -->
+        <div id="enemyHealthBars"></div>
+    </div>
+    
+    <!-- Crosshair (visible when pointer is locked) -->
+    <div id="crosshair">
+        <svg id="crosshairSvg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" stroke="rgba(0,255,0,0.5)" stroke-width="2" fill="none"/>
+            <line x1="50" y1="25" x2="50" y2="75" stroke="rgba(0,255,0,0.7)" stroke-width="2"/>
+            <line x1="25" y1="50" x2="75" y2="50" stroke="rgba(0,255,0,0.7)" stroke-width="2"/>
+            <circle cx="50" cy="50" r="2" fill="rgba(0,255,0,0.9)"/>
+        </svg>
+    </div>
+    
+    <!-- Aiming Guide -->
+    <div id="aimingGuide">
+        Move mouse to aim | Click to fire | W/S to adjust power
+    </div>
+    
+    <!-- Performance Stats -->
+    <div id="performanceStats">FPS: 60</div>
+    
+    <!-- Restart Button -->
+    <button id="restartButton">Play Again</button>
+    
+    <!-- Loading Screen -->
     <div id="loadingScreen">
-        <h1 id="gameTitle">3D SCORCHED EARTH</h1>
+        <h1 id="gameTitle">3D TANK ARTILLERY COMBAT</h1>
         <div id="loadingBar">
             <div id="loadingProgress"></div>
         </div>
-        <p id="gameInfo">A 3D tank artillery game</p>
-    </div>
-    
-    <div id="orientationMessage">
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjQiIHk9IjIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIyMCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PHBhdGggZD0iTTEyIDE4aC4wMSI+PC9wYXRoPjwvc3ZnPg==" alt="Rotate Device">
-        <h2>Please rotate your device</h2>
-        <p>Landscape mode provides the best gaming experience</p>
+        <p id="gameInfo">Take aim, adjust for wind, and destroy enemy tanks</p>
     </div>
     
     <!-- Resources display UI -->
@@ -344,29 +148,42 @@
         <button class="reward-continue" id="rewardContinue">Continue</button>
     </div>
     
+    <!-- Orientation change message -->
+    <div id="orientationMessage">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxyZWN0IHg9IjQiIHk9IjIiIHdpZHRoPSIxNiIgaGVpZ2h0PSIyMCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PHBhdGggZD0iTTEyIDE4aC4wMSI+PC9wYXRoPjwvc3ZnPg==" alt="Rotate Device">
+        <h2>Please rotate your device</h2>
+        <p>Landscape mode provides the best gaming experience</p>
+    </div>
+    
     <script type="module">
         import { Game } from './game.js';
-        import { AuthManager } from './auth.js';
         
-        // Loading screen management
+        // DOM Elements
         const loadingScreen = document.getElementById('loadingScreen');
         const loadingProgress = document.getElementById('loadingProgress');
         const orientationMessage = document.getElementById('orientationMessage');
         const resourceDisplay = document.getElementById('resourceDisplay');
         const rewardPopup = document.getElementById('rewardPopup');
         const rewardContinue = document.getElementById('rewardContinue');
+        const crosshair = document.getElementById('crosshair');
+        const aimingGuide = document.getElementById('aimingGuide');
         
         // Resource display elements
         const creditsDisplay = document.getElementById('creditsDisplay');
         const experienceDisplay = document.getElementById('experienceDisplay');
         const levelDisplay = document.getElementById('levelDisplay');
         
-        // Reward display elements
-        const creditReward = document.getElementById('creditReward');
-        const xpReward = document.getElementById('xpReward');
-        
-        // Game instance
-        let game = null;
+        // Game HUD elements
+        const windValue = document.getElementById('windValue');
+        const windIndicator = document.getElementById('windIndicator');
+        const powerValue = document.getElementById('powerValue');
+        const powerFill = document.getElementById('powerFill');
+        const playerHealthText = document.getElementById('playerHealthText');
+        const playerHealthFill = document.getElementById('playerHealthFill');
+        const enemyHealthBars = document.getElementById('enemyHealthBars');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const restartButton = document.getElementById('restartButton');
+        const performanceStats = document.getElementById('performanceStats');
         
         // Setup reward continue button
         rewardContinue.addEventListener('click', () => {
@@ -393,36 +210,168 @@
             }
         }
         
-        // Initialize the authentication manager
-        const authManager = new AuthManager((user) => {
-            // User authentication state changed
-            if (user) {
-                // User signed in
-                console.log('User signed in:', user);
+        // Create and initialize custom UI handlers
+        const customUI = {
+            updateMessage: function(message) {
+                messageDisplay.textContent = message;
                 
-                // Show resource display
-                updateResourceDisplay(user);
+                // Flash effect
+                messageDisplay.style.backgroundColor = 'rgba(0, 100, 0, 0.8)';
+                setTimeout(() => {
+                    messageDisplay.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                }, 300);
+            },
+            
+            updateWindIndicator: function(windStrength) {
+                const strength = Math.abs(windStrength).toFixed(1);
+                windValue.textContent = strength;
                 
-                // Start game if not already started
-                if (!game) {
-                    startGameWithUser(user);
-                } else {
-                    // Update existing game with user
-                    game.updatePlayerProfile(user);
+                // Create arrow indicators
+                const direction = windStrength > 0 ? '→' : '←';
+                const arrowCount = Math.min(5, Math.ceil(Math.abs(windStrength)));
+                const arrows = direction.repeat(arrowCount);
+                
+                windIndicator.innerHTML = arrows;
+                
+                // Color coding
+                let color = '#22aa22'; // Green for weak wind
+                if (Math.abs(windStrength) > 3) {
+                    color = '#aaaa22'; // Yellow for medium wind
                 }
-            } else {
-                // User signed out, show auth screen
-                authManager.showAuthScreen();
+                if (Math.abs(windStrength) > 4) {
+                    color = '#aa2222'; // Red for strong wind
+                }
                 
-                // Hide resource display
-                resourceDisplay.style.opacity = '0';
-                resourceDisplay.style.transform = 'translateY(-20px)';
+                windValue.style.color = color;
+            },
+            
+            updatePowerMeter: function(power) {
+                // Update power display
+                powerValue.textContent = power;
+                
+                // Update power meter fill
+                const percentage = ((power - 10) / 50) * 100;
+                powerFill.style.width = `${percentage}%`;
+                
+                // Color coding based on power level
+                if (power < 20) {
+                    powerFill.style.backgroundColor = '#2222aa'; // Blue for low power
+                } else if (power < 40) {
+                    powerFill.style.backgroundColor = '#22aa22'; // Green for medium power
+                } else {
+                    powerFill.style.backgroundColor = '#aa2222'; // Red for high power
+                }
+            },
+            
+            updateHealthBars: function(playerHealth, enemyHealths) {
+                // Update player health
+                playerHealthText.textContent = `${Math.floor(playerHealth)}%`;
+                playerHealthFill.style.width = `${playerHealth}%`;
+                
+                // Color transition for player health
+                if (playerHealth > 60) {
+                    playerHealthFill.style.backgroundColor = '#22aa22'; // Green
+                } else if (playerHealth > 30) {
+                    playerHealthFill.style.backgroundColor = '#aaaa22'; // Yellow
+                } else {
+                    playerHealthFill.style.backgroundColor = '#aa2222'; // Red
+                }
+                
+                // Clear and rebuild enemy health bars
+                enemyHealthBars.innerHTML = '';
+                
+                // Create enemy health bars
+                enemyHealths.forEach((health, index) => {
+                    const container = document.createElement('div');
+                    container.className = 'health-bar-container';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'health-bar-label';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = `Enemy ${index + 1}`;
+                    
+                    const valueSpan = document.createElement('span');
+                    valueSpan.textContent = `${Math.floor(health)}%`;
+                    
+                    label.appendChild(nameSpan);
+                    label.appendChild(valueSpan);
+                    container.appendChild(label);
+                    
+                    const bar = document.createElement('div');
+                    bar.className = 'health-bar';
+                    
+                    const fill = document.createElement('div');
+                    fill.className = 'health-fill enemy-health-fill';
+                    fill.style.width = `${health}%`;
+                    
+                    // Color transition for enemy health
+                    if (health > 60) {
+                        fill.style.backgroundColor = '#aa2222'; // Red - enemy at full strength
+                    } else if (health > 30) {
+                        fill.style.backgroundColor = '#aa6622'; // Orange
+                    } else {
+                        fill.style.backgroundColor = '#aa4422'; // Dark orange - enemy nearly defeated
+                    }
+                    
+                    bar.appendChild(fill);
+                    container.appendChild(bar);
+                    enemyHealthBars.appendChild(container);
+                });
+            },
+            
+            toggleCrosshair: function(visible) {
+                crosshair.className = visible ? 'active' : '';
+            },
+            
+            toggleAimingGuide: function(visible) {
+                aimingGuide.className = visible ? 'visible' : '';
+            },
+            
+            showRestartButton: function() {
+                restartButton.style.display = 'block';
+                
+                // Fade-in effect
+                restartButton.style.opacity = '0';
+                setTimeout(() => {
+                    restartButton.style.opacity = '1';
+                }, 10);
+            },
+            
+            hideRestartButton: function() {
+                restartButton.style.display = 'none';
+            },
+            
+            updatePerformanceStats: function(fps) {
+                performanceStats.textContent = `FPS: ${fps}`;
+            },
+            
+            togglePerformanceStats: function(show) {
+                performanceStats.style.display = show ? 'block' : 'none';
+            },
+            
+            handleResize: function(width, height) {
+                // Handle responsive layout adjustments
+                const isLandscape = width > height;
+                
+                if (isLandscape) {
+                    // Landscape layout
+                    document.getElementById('healthContainer').style.top = '20px';
+                    document.getElementById('healthContainer').style.left = '20px';
+                } else {
+                    // Portrait layout - adjust positions
+                    document.getElementById('healthContainer').style.top = '80px';
+                    document.getElementById('healthContainer').style.left = '10px';
+                }
             }
+        };
+        
+        // Start loading sequence
+        simulateLoading(() => {
+            startGame();
         });
         
-        // Show auth screen after loading animation
-        function showAuthAfterLoading() {
-            // Simulate loading progress
+        function simulateLoading(callback) {
             let progress = 0;
             const loadingInterval = setInterval(() => {
                 progress += 5;
@@ -434,87 +383,38 @@
                         loadingScreen.style.opacity = '0';
                         setTimeout(() => {
                             loadingScreen.style.display = 'none';
-                            
-                            // If user is already logged in, start the game
-                            const currentUser = authManager.getCurrentUser();
-                            if (currentUser) {
-                                startGameWithUser(currentUser);
-                                updateResourceDisplay(currentUser);
-                            } else {
-                                // Otherwise show the auth screen
-                                authManager.showAuthScreen();
-                            }
+                            if (callback) callback();
                         }, 500);
                     }, 500);
                 }
             }, 100);
         }
         
-        function updateResourceDisplay(user) {
-            if (!user) return;
-            
-            // Get player data if available
-            const playerData = localStorage.getItem(`tankGame_player_${user.uid}`);
-            let resources = {
-                credits: 1000,
-                experience: 0,
-                level: 1
-            };
-            
-            if (playerData) {
-                try {
-                    const parsedData = JSON.parse(playerData);
-                    resources = parsedData.resources || resources;
-                } catch (e) {
-                    console.error('Error parsing player data', e);
-                }
-            }
-            
-            // Update UI
-            creditsDisplay.textContent = `${resources.credits} Credits`;
-            experienceDisplay.textContent = `${resources.experience} XP`;
-            levelDisplay.textContent = `Level ${resources.level}`;
-            
-            // Show resource display
-            resourceDisplay.style.opacity = '1';
-            resourceDisplay.style.transform = 'translateY(0)';
-        }
-        
-        function showRewardPopup(rewards) {
-            // Update reward values
-            creditReward.textContent = rewards.credits;
-            xpReward.textContent = rewards.experience;
-            
-            // Show popup
-            rewardPopup.classList.add('show');
-            
-            // Update resource display
-            updateResourceDisplay(authManager.getCurrentUser());
-        }
-        
-        function startGameWithUser(user) {
+        function startGame() {
             // Get the render target
             const renderDiv = document.getElementById('renderDiv');
             
-            // Initialize the game with the render target, device info, and user
-            game = new Game(renderDiv, isMobile, user);
+            // Initialize the game with the render target and device info
+            const game = new Game(renderDiv, isMobile);
             
-            // Set callback for resource updates
-            game.onResourceUpdate = (resources) => {
-                updateResourceDisplay(authManager.getCurrentUser());
-            };
+            // Override game UI with our custom UI
+            game.ui = customUI;
             
-            // Set callback for rewards
-            game.onReward = (rewards) => {
-                showRewardPopup(rewards);
-            };
+            // Set restart button handler
+            restartButton.addEventListener('click', () => {
+                game.restart();
+            });
             
-            // Start the game loop
+            // Start the game
             game.start();
+            
+            // Listen for pointer lock changes to show/hide crosshair
+            document.addEventListener('pointerlockchange', () => {
+                const isLocked = document.pointerLockElement === renderDiv;
+                customUI.toggleCrosshair(isLocked);
+                customUI.toggleAimingGuide(isLocked);
+            });
         }
-        
-        // Start loading sequence
-        showAuthAfterLoading();
     </script>
 </body>
 </html>

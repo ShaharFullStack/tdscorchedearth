@@ -32,51 +32,6 @@ export class UI {
     this.messageElement.style.textAlign = 'center';
     this.uiContainer.appendChild(this.messageElement);
     
-    // Control instructions (only for desktop)
-    if (!this.isMobile) {
-      this.controlsElement = document.createElement('div');
-      this.controlsElement.style.position = 'absolute';
-      this.controlsElement.style.bottom = '10px';
-      this.controlsElement.style.right = '10px';
-      this.controlsElement.style.padding = '10px';
-      this.controlsElement.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
-      this.controlsElement.style.borderRadius = '5px';
-      this.controlsElement.style.color = 'white';
-      this.controlsElement.style.fontFamily = 'Arial, sans-serif';
-      this.controlsElement.style.fontSize = '14px';
-      this.controlsElement.style.textAlign = 'right';
-      this.controlsElement.style.pointerEvents = 'none';
-      this.controlsElement.style.transition = 'opacity 0.5s ease';
-      this.controlsElement.style.opacity = '0.7';
-      this.controlsElement.style.maxWidth = '250px';
-      
-      this.controlsElement.innerHTML = `
-        <div style="margin-bottom:8px;font-weight:bold;">Controls:</div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Move:</span><span>WASD</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Look/Aim:</span><span>Mouse</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Fire:</span><span>Left Click</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Power Up:</span><span>E</span></div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Power Down:</span><span>Q</span></div>
-        <div style="display:flex;justify-content:space-between;"><span>Run:</span><span>Shift</span></div>
-      `;
-      
-      this.container.appendChild(this.controlsElement);
-      
-      // Fade out controls after 5 seconds
-      setTimeout(() => {
-        this.controlsElement.style.opacity = '0.3';
-      }, 5000);
-      
-      // Show controls on hover
-      this.controlsElement.addEventListener('mouseenter', () => {
-        this.controlsElement.style.opacity = '0.9';
-      });
-      
-      this.controlsElement.addEventListener('mouseleave', () => {
-        this.controlsElement.style.opacity = '0.3';
-      });
-    }
-    
     // Game info container (wind and power)
     this.gameInfoContainer = document.createElement('div');
     this.gameInfoContainer.style.display = 'flex';
@@ -90,13 +45,13 @@ export class UI {
     this.windElement.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
     this.windElement.style.borderRadius = '5px';
     this.windElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    this.windElement.style.flex = '1 1 48%';
+    this.windElement.style.flex = '1 1 30%';
     this.gameInfoContainer.appendChild(this.windElement);
     
     // Spacer
-    const spacer = document.createElement('div');
-    spacer.style.width = '10px';
-    this.gameInfoContainer.appendChild(spacer);
+    const spacer1 = document.createElement('div');
+    spacer1.style.width = '10px';
+    this.gameInfoContainer.appendChild(spacer1);
     
     // Power meter
     this.powerContainer = document.createElement('div');
@@ -104,7 +59,7 @@ export class UI {
     this.powerContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
     this.powerContainer.style.borderRadius = '5px';
     this.powerContainer.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-    this.powerContainer.style.flex = '1 1 48%';
+    this.powerContainer.style.flex = '1 1 30%';
     this.gameInfoContainer.appendChild(this.powerContainer);
     
     this.powerLabel = document.createElement('div');
@@ -125,6 +80,39 @@ export class UI {
     this.powerFill.style.width = '50%';
     this.powerFill.style.transition = 'width 0.2s ease';
     this.powerMeter.appendChild(this.powerFill);
+    
+    // Spacer
+    const spacer2 = document.createElement('div');
+    spacer2.style.width = '10px';
+    this.gameInfoContainer.appendChild(spacer2);
+    
+    // Fuel meter
+    this.fuelContainer = document.createElement('div');
+    this.fuelContainer.style.padding = '5px 10px';
+    this.fuelContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    this.fuelContainer.style.borderRadius = '5px';
+    this.fuelContainer.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+    this.fuelContainer.style.flex = '1 1 30%';
+    this.gameInfoContainer.appendChild(this.fuelContainer);
+    
+    this.fuelLabel = document.createElement('div');
+    this.fuelLabel.textContent = 'Fuel:';
+    this.fuelContainer.appendChild(this.fuelLabel);
+    
+    this.fuelMeter = document.createElement('div');
+    this.fuelMeter.style.height = '10px';
+    this.fuelMeter.style.marginTop = '5px';
+    this.fuelMeter.style.backgroundColor = '#333';
+    this.fuelMeter.style.borderRadius = '5px';
+    this.fuelMeter.style.overflow = 'hidden';
+    this.fuelContainer.appendChild(this.fuelMeter);
+    
+    this.fuelFill = document.createElement('div');
+    this.fuelFill.style.height = '100%';
+    this.fuelFill.style.backgroundColor = '#22aa22';
+    this.fuelFill.style.width = '100%';
+    this.fuelFill.style.transition = 'width 0.2s ease';
+    this.fuelMeter.appendChild(this.fuelFill);
     
     // Health bars container
     this.healthContainer = document.createElement('div');
@@ -158,21 +146,8 @@ export class UI {
     // Enemy health bars will be added dynamically
     this.enemyHealthBars = [];
     
-    // Crosshair (for desktop FPS controls)
-    if (!this.isMobile) {
-      this.crosshair = document.createElement('div');
-      this.crosshair.style.position = 'absolute';
-      this.crosshair.style.top = '50%';
-      this.crosshair.style.left = '50%';
-      this.crosshair.style.width = '10px';
-      this.crosshair.style.height = '10px';
-      this.crosshair.style.borderRadius = '50%';
-      this.crosshair.style.border = '2px solid rgba(255, 255, 255, 0.7)';
-      this.crosshair.style.transform = 'translate(-50%, -50%)';
-      this.crosshair.style.pointerEvents = 'none';
-      this.crosshair.style.zIndex = '1000';
-      this.container.appendChild(this.crosshair);
-    }
+    // Controls info
+    this.createControlsInfo();
     
     // Restart button (hidden initially)
     this.restartButton = document.createElement('button');
@@ -211,6 +186,52 @@ export class UI {
     this.statsContainer.style.fontSize = '12px';
     this.statsContainer.style.display = 'none';
     this.container.appendChild(this.statsContainer);
+    
+    // Message display for notifications (like "Out of fuel!")
+    this.notificationContainer = document.createElement('div');
+    this.notificationContainer.style.position = 'absolute';
+    this.notificationContainer.style.bottom = '80px';
+    this.notificationContainer.style.left = '50%';
+    this.notificationContainer.style.transform = 'translateX(-50%)';
+    this.notificationContainer.style.padding = '10px 20px';
+    this.notificationContainer.style.backgroundColor = 'rgba(50, 50, 200, 0.8)';
+    this.notificationContainer.style.color = 'white';
+    this.notificationContainer.style.borderRadius = '5px';
+    this.notificationContainer.style.fontWeight = 'bold';
+    this.notificationContainer.style.textAlign = 'center';
+    this.notificationContainer.style.opacity = '0';
+    this.notificationContainer.style.transition = 'opacity 0.3s ease';
+    this.notificationContainer.style.pointerEvents = 'none';
+    this.container.appendChild(this.notificationContainer);
+  }
+  
+  createControlsInfo() {
+    // Create a controls info panel
+    this.controlsInfo = document.createElement('div');
+    this.controlsInfo.style.position = 'absolute';
+    this.controlsInfo.style.bottom = '10px';
+    this.controlsInfo.style.right = '10px';
+    this.controlsInfo.style.padding = '10px';
+    this.controlsInfo.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+    this.controlsInfo.style.color = 'white';
+    this.controlsInfo.style.borderRadius = '5px';
+    this.controlsInfo.style.fontSize = '12px';
+    this.controlsInfo.style.maxWidth = '200px';
+    this.controlsInfo.style.pointerEvents = 'none';
+    
+    // Only show on desktop
+    if (!this.isMobile) {
+      this.controlsInfo.innerHTML = `
+        <strong>Controls:</strong><br>
+        WASD: Move Tank<br>
+        ←→: Rotate Turret<br>
+        ↑↓: Adjust Power<br>
+        Space: Fire<br>
+        C: Change Camera<br>
+        R: Refill Fuel (Debug)
+      `;
+      this.container.appendChild(this.controlsInfo);
+    }
   }
   
   updateMessage(message) {
@@ -221,6 +242,16 @@ export class UI {
     setTimeout(() => {
       this.messageElement.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
     }, 300);
+  }
+  
+  showMessage(message, duration = 2000) {
+    // Show a temporary notification message
+    this.notificationContainer.textContent = message;
+    this.notificationContainer.style.opacity = '1';
+    
+    setTimeout(() => {
+      this.notificationContainer.style.opacity = '0';
+    }, duration);
   }
   
   updateWindIndicator(windStrength) {
@@ -259,6 +290,41 @@ export class UI {
       this.powerFill.style.backgroundColor = '#22aa22'; // Green for medium power
     } else {
       this.powerFill.style.backgroundColor = '#aa2222'; // Red for high power
+    }
+  }
+  
+  updateFuelMeter(fuel) {
+    // Normalize fuel from 0-100 to 0-100%
+    const percentage = Math.max(0, Math.min(100, fuel));
+    this.fuelFill.style.width = `${percentage}%`;
+    this.fuelLabel.textContent = `Fuel: ${Math.round(percentage)}%`;
+    
+    // Color coding based on fuel level
+    if (percentage < 20) {
+      this.fuelFill.style.backgroundColor = '#aa2222'; // Red for low fuel
+    } else if (percentage < 50) {
+      this.fuelFill.style.backgroundColor = '#aaaa22'; // Yellow for medium fuel
+    } else {
+      this.fuelFill.style.backgroundColor = '#22aa22'; // Green for high fuel
+    }
+    
+    // Flash warning when fuel is low
+    if (percentage < 20) {
+      this.fuelFill.style.animation = 'pulseFuel 1s infinite';
+      if (!document.getElementById('fuel-animation')) {
+        const style = document.createElement('style');
+        style.id = 'fuel-animation';
+        style.textContent = `
+          @keyframes pulseFuel {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    } else {
+      this.fuelFill.style.animation = 'none';
     }
   }
   
@@ -383,10 +449,21 @@ export class UI {
       this.enemyHealthBars[i].bar.style.height = barHeight;
     }
     
-    // Position the crosshair in the center
-    if (this.crosshair) {
-      this.crosshair.style.top = '50%';
-      this.crosshair.style.left = '50%';
+    // Adjust controls info
+    if (this.controlsInfo) {
+      if (isMobile) {
+        this.controlsInfo.style.display = 'none';
+      } else {
+        this.controlsInfo.style.display = 'block';
+        if (isLandscape) {
+          this.controlsInfo.style.right = '10px';
+          this.controlsInfo.style.bottom = '10px';
+          this.controlsInfo.style.left = 'auto';
+        } else {
+          this.controlsInfo.style.right = '10px';
+          this.controlsInfo.style.bottom = '10px';
+        }
+      }
     }
   }
 }
