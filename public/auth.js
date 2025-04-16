@@ -48,6 +48,22 @@ export class AuthManager {
     
     // Check for redirect result immediately
     this.checkRedirectResult();
+    
+    // Check if user is already signed in
+    this.checkCurrentUser();
+  }
+  
+  // NEW METHOD: Check if user is already signed in
+  checkCurrentUser() {
+    // If there's already a user signed in, hide the auth screen
+    if (this.auth.currentUser) {
+      console.log("User already signed in:", this.auth.currentUser.displayName);
+      this.hideAuthScreen();
+    } else {
+      // If no user is signed in, show the auth screen
+      console.log("No user currently signed in, showing auth screen");
+      this.showAuthScreen();
+    }
   }
   
   async checkRedirectResult() {
@@ -59,6 +75,9 @@ export class AuthManager {
         // The auth state listener will handle updating the UI
         console.log("User signed in via redirect:", result.user);
         this.showToast(`Welcome, ${result.user.displayName || 'User'}!`);
+        
+        // Make sure to hide the auth screen
+        this.hideAuthScreen();
       }
     } catch (error) {
       console.error("Error checking redirect result:", error);
@@ -70,6 +89,8 @@ export class AuthManager {
     firebaseAuthStateChanged(this.auth, async (user) => {
       if (user) {
         // User is signed in
+        console.log("Auth state changed: User is signed in", user.displayName);
+        
         const userData = {
           uid: user.uid,
           displayName: user.displayName || 'Player',
@@ -95,8 +116,12 @@ export class AuthManager {
         }
       } else {
         // User is signed out
+        console.log("Auth state changed: User is signed out");
         this.currentUser = null;
         this.updateProfileUI(null);
+        
+        // Show auth screen again when signed out
+        this.showAuthScreen();
         
         // Call the callback if provided
         if (this.onUserAuthStateChanged) {
@@ -502,30 +527,42 @@ export class AuthManager {
   
   async signInWithGoogle() {
     try {
+      // First check if already signed in
+      if (this.auth.currentUser) {
+        console.log("User already signed in:", this.auth.currentUser.displayName);
+        this.hideAuthScreen();
+        return;
+      }
+      
       this.setLoading(true);
       this.showToast('Redirecting to Google login...', 'info');
       
-      // Use Firebase redirect auth instead of popup
-      await signInWithRedirect(this.auth, this.googleProvider);
-      
-      // The page will redirect to Google and then back to your app
-      // getRedirectResult will handle the result when the user comes back
-      
+      // Try popup first, then fallback to redirect
+      try {
+        const result = await signInWithPopup(this.auth, this.googleProvider);
+        console.log("User signed in via popup:", result.user);
+        this.showToast(`Welcome, ${result.user.displayName || 'User'}!`);
+        this.hideAuthScreen();
+      } catch (popupError) {
+        console.error('Google popup sign in error:', popupError);
+        
+        // If popup fails, try redirect
+        if (popupError.code === 'auth/popup-blocked' || 
+            popupError.code === 'auth/cancelled-popup-request' ||
+            popupError.code === 'auth/popup-closed-by-user') {
+          this.showToast('Popup blocked. Trying redirect method...', 'info');
+          await signInWithRedirect(this.auth, this.googleProvider);
+        } else if (popupError.code === 'auth/unauthorized-domain') {
+          // Special handling for unauthorized domain
+          this.showToast('This domain is not authorized for Firebase auth. Please check Firebase console.', 'error');
+        } else {
+          this.showToast('Sign in failed. Trying redirect method...', 'info');
+          await signInWithRedirect(this.auth, this.googleProvider);
+        }
+      }
     } catch (error) {
       console.error('Google sign in error:', error);
-      
-      // Try fallback to popup if redirect fails
-      try {
-        if (error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-blocked') {
-          this.showToast('Popup blocked. Trying alternate method...', 'info');
-          await signInWithRedirect(this.auth, this.googleProvider);
-        } else {
-          this.showToast('Sign in failed. Please try again.', 'error');
-        }
-      } catch (fallbackError) {
-        console.error('Fallback sign in error:', fallbackError);
-        this.showToast('Sign in failed. Please try again.', 'error');
-      }
+      this.showToast('Sign in failed. Please try again.', 'error');
     } finally {
       this.setLoading(false);
     }

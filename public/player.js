@@ -9,6 +9,7 @@ export class Player {
     this.power = 40; // Initial firing power
     this.turretAngle = 0; // Horizontal angle in radians
     this.elevation = 0.2; // Vertical angle in radians
+    this.moveSpeed = 0.15;
     
     // Player profile and progression data
     this.playerProfile = playerData || {
@@ -146,6 +147,9 @@ export class Player {
     // Apply turret speed upgrade
     this.turretRotationSpeed = 0.05 * (1 + (this.upgrades.turretSpeed - 1) * 0.2);
     
+    // Apply movement speed upgrade
+    this.moveSpeed = 0.15 * (1 + (this.upgrades.fuelEfficiency - 1) * 0.15);
+    
     // Apply visual upgrades if tank has been created
     if (this.body) {
       // Adjust tank size based on armor level
@@ -190,15 +194,42 @@ export class Player {
   }
   
   rotateTurretToward(targetAngle) {
-    // Slightly rotate toward the target angle
-    const diff = targetAngle - this.turretAngle;
-    this.rotateTurret(diff * 0.1);
+    // Directly set the turret angle for first-person control
+    this.turretAngle = targetAngle;
+    this.turretPivot.rotation.y = targetAngle;
   }
   
   adjustElevation(angle) {
     this.elevation += angle;
     this.elevation = Math.max(0, Math.min(Math.PI / 3, this.elevation));
     this.elevationPivot.rotation.x = -this.elevation;
+  }
+  
+  setElevation(angle) {
+    // Directly set the elevation for first-person control
+    this.elevation = Math.max(0, Math.min(Math.PI / 3, angle));
+    this.elevationPivot.rotation.x = -this.elevation;
+  }
+  
+  // Method for moving the tank
+  move(direction) {
+    // Apply movement based on direction vector
+    this.body.position.add(direction);
+  }
+  
+  // Method for moving the tank forward/backward/strafe based on turret direction
+  moveInDirection(forwardAmount, rightAmount) {
+    // Get forward and right vectors based on turret angle
+    const forward = new THREE.Vector3(Math.sin(this.turretAngle), 0, Math.cos(this.turretAngle));
+    const right = new THREE.Vector3(Math.cos(this.turretAngle), 0, -Math.sin(this.turretAngle));
+    
+    // Combine movement vectors
+    const movement = new THREE.Vector3();
+    movement.addScaledVector(forward, forwardAmount * this.moveSpeed);
+    movement.addScaledVector(right, rightAmount * this.moveSpeed);
+    
+    // Apply movement
+    this.body.position.add(movement);
   }
   
   increasePower() {
